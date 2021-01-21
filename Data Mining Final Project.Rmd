@@ -1,0 +1,329 @@
+---
+title: "Data Mining Final Project"
+author: "Colleen Callahan (cc5dh), Jordan Machita (jm8ux) and Tyler Manderfield (jtm4qx)"
+date: "12/10/2020"
+output: 
+  html_document:
+    css: "style.css"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<div class="boxBorder">
+## Introduction
+
+### **Background**
+If you are looking to learn about clustering and have some prior experience with data science and R, this article is for you! We are three graduate students at the University of Virginia School of Data Science and we are here to explain the basics of clustering as well as some applications and examples in an easily digestible format.
+
+### **What is clustering?**
+Many data science problems revolve around prediction. These problems use training data where the response variable is known and attempt to build a model to predict the response when it is not known. However, some data science problems seek to simply group the data points according to some underlying structure or natural categories that are unknown. These situations are referred to as unsupervised learning because we do not know the true class labels yet we still seek to sort the data into groups. One of the most common approaches to solving this problem is clustering. There are a variety of clustering methods, which we will dig into later, but they all share the same purpose of sorting the data into groups based on features or metrics.
+
+### **Why clustering?**
+Clustering is often used to gain insight into the data by revealing patterns and similarities. Data scientists can use the groupings produced by clustering to identify common features of subgroups that may be useful to their domain-specific problem.
+
+### **Distance Metrics**
+In order to understand the algorithms used for clustering, you first need to have a foundational understanding of distance metrics. The measure of distance between two points is used to determine to which cluster a data point should belong. There are two primary distance metrics that are used: Euclidean distance and Manhattan distance. Euclidean distance is the shortest path between points A and B, and it can always be represented by a straight line. A common analogy for Euclidean distance is the path a bird would fly between two points because it can fly in a straight line. Manhattan distance is also called city block distance because it is the distance between two points if they are constrained on some grid-like path. As the name suggests, Manhattan distance would be the distance you travel when walking between two points in New York City since you must follow the grid pattern of the roads. In machine learning problems, Manhattan distance is often used for clustering problems where the data has a large number of dimensions, while Euclidean distance is more common for lower dimensional data. The formula for the Manhattan distance is: $d = \Sigma^n_{i=1} |x_i - y_i|$. The formula for Euclidean distance is $d(x,y) = \sqrt{\Sigma^n_{i=1}(x_i-y_i)^2}$. 
+
+Another distance metric that is used is Jaccard distance, which is a measure of how dissimilar two sets are. This metric is an example of a distance used in set theory rather than on a cartesian plane. We can calculate the Jaccard distance by $d_J(A,B) = 1 - \frac{|A\cap B|}{|A\cup B|} = 1 - \frac{|A\cap B|}{|A| + |B| - |A\cap B|}$.
+
+### **Standardization**
+Since the distance metric plays a key role in clustering, we want the comparison of distances between different features to be on the same scale. Thus, it is important to standardize the data prior to running clustering. The most common approach to standardizing each feature is to take the observation value and subtract the mean of that feature then divide by the standard deviation. This allows for a more fair comparison of distances while preserving the proportional distance for each feature. The resulting value is the number of standard deviations the value falls from the mean.
+
+### **Hard vs Soft Classification**
+Another important concept to master regarding clustering is hard versus soft classification. Hard classification is a natural way to think about clustering because it takes each data point and assigns it to a cluster or group. Thus, all of the data points receive a single cluster label. Soft classification, on the other hand, assigns each data point a probability of being in each cluster rather than just a single label. In reality, soft classification happens behind the scenes of hard classification and the data point is assigned to the cluster to which it has the greatest probability of belonging. However, it can be useful not to assign these hard labels and rather to look at the probabilities produced by soft classification. By doing so, we are able to better account for the uncertainty regarding our clustering results.
+
+
+</div>
+
+
+<div class="boxBorder">
+## Applications
+- **DNA analysis:** Clustering of DNA profiles is relevant in many settings such as medicine and forensics. Health science researchers may use clustering of DNA samples to predict how certain drugs may affect certain patients, and law enforcement may use clustering of DNA profiles obtained from crime scenes to identify biological trends such as hair/eye color and biogeographic ancestry. We explore an example of clustering DNA profiles to identify population groups in more detail below. 
+
+<center>
+![DNA analysis](/Users/colleencallahan/Desktop/DNA_1280p.jpg){width=25%}
+</center>
+
+- **Customer segmentation:** Marketing often involves targeting specific groups of potential customers based on their demographics or other characteristics. Clustering methods allow marketers to group the customers according to their features such that more similar customers will be grouped together in order to optimize marketing efforts.
+<center>
+![](/Users/colleencallahan/Desktop/CustomerSeg.jpg){width=28%}
+</center>
+
+- **Image segmentation:** Clustering can be used to group the pixels in images based on their color with the goal of identifying different objects or aspects of the picture as individual clusters.
+<center>
+![](/Users/colleencallahan/Desktop/image-4.png){width=40%}
+</center>
+
+- **Author identification:** A corpus of documents can be clustered according to similarities of the documents with the goal of each grouping corresponding to a specific author. This is possible because clustering algorithms can detect similar writing styles or word choices among documents, which indicates they share the same author and thus should be in the same cluster.
+<center>
+![](/Users/colleencallahan/Desktop/authordist.png){width=25%}
+</center>
+
+- **Spam detection:** Another way that clustering based on text analysis can be useful is identifying spam. The messages in emails can be used to cluster them into groups where certain characteristics can allow a group to be marked as spam.
+<center>
+![](/Users/colleencallahan/Desktop/spam-filter.png){width=30%}
+</center>
+
+- **Fraud detection:** Clustering can help uncover fraud by grouping transactions or customers according to fraudulent behavior and calculating the similarity or connection of new transactions to fraud.
+<center>
+![](/Users/colleencallahan/Desktop/frauddetection.png){width=30%}
+</center>
+
+
+- **Community detection:** Graphs (networks) play an important role in many sciences and mathematical domains. A common goal is to group the nodes of the graph based on similarity as defined by the connectedness or edges in the graph, which can be done using clustering techniques.
+<center>
+![](/Users/colleencallahan/Desktop/ocd_pic1.png){width=35%}
+</center>
+
+
+</div>
+
+<div class="boxBorder">
+## Methods
+
+### **Kmeans**
+- **Introduction:** K-Means clustering is a popular method for unsupervised learning, due to its speed of computation relative to other clustering methods. A high level explanation of K-means is the following: K-means is an iterative algorithm that works by assigning points to the cluster with the nearest centroid, updating the cluster centroids based on the new points belonging to the respective cluster, and repeating this process until no point changes cluster from the previous iteration. To accomplish this, we must start with a number of cluster centroids, meaning we must also know the number of clusters we would like to end up with. This is one of the downsides of k-means clustering, however, there are a few heuristics that can be used to select an “optimal” value of k based on the results of the clustering.
+
+- **Approaches:** Before examining coding details, it is important to separate our high level understanding of k-means from its actual implementation. We will walk through two of the most prominent K-Means Clustering algorithms to highlight the slight differences between the explanation provided above and the most popular modern implementation.
+
+  - **Lloyd’s Algorithm (The Classical Approach):**
+
+    The first algorithm we will discuss is Lloyd’s Algorithm. The implementation of this     algorithm is essentially the same as general outline described above. The algorithm      follows these steps:
+  
+    1. Randomly initializes k points to be the initial cluster centroids
+    2. Assigns the points to the cluster that has the nearest centroid.
+    3. Calculates the new centroid for each cluster by averaging the points relating to     each respective cluster
+    4. Repeats steps 2 and 3 until there is convergence (meaning the clusters remain the     same in two consecutive iterations)
+
+
+  **Caution:** There is a problem with this algorithm, though, which leads it to have a tendency to fall into a local optima depending on the choice of the random start. This extends from the fact that the points are assigned to the nearest centroid each time and does not account for how that cluster has changed in terms of its relationship between its centroid and the points that comprise it. This is why another algorithm, Hartigan-Wong K-Means, is typically used today.
+
+
+  - **Hartigan-Wong (The Modern Implementation):**
+
+    In the implementation of K-Means, Hartigan and Wong propose to alter how points are      assigned to their new clusters. Instead of simply assigning points to the cluster with   the nearest centroid, the iterative process evaluates whether or not a point should be   reassigned depending on how it affects the overall Within-Cluster sum of squares. Each   observation is examined by removing said observation from its current cluster, updating   the centroid of the cluster it was removed from, and evaluating the cluster assignment   that would minimize the total within-cluster sum of squares. This means that the point   will not necessarily be assigned to the cluster with the closest centroid. Let’s         examine the steps in this algorithm in a clearer list:
+    
+    1. Randomly initializes k points to be the initial cluster centroids
+    2. Assigns the points to the cluster that has the nearest centroid.
+    3. Calculates the new centroid for each respective cluster
+    4. Iterates through each observation doing the following until convergence:
+    5. Remove the point from its current cluster
+    6. Update the cluster’s centroid to account for the removal
+    7. Evaluate which cluster it should belong to by adding the point to each cluster,       calculating the new centroid and examining the change in Total Within-Cluster Sum of     Squares
+    8. Assign the point to the cluster that minimizes the total sum of squares
+
+- **Conclusion:** Thus, for both algorithms, convergence to a solution is guaranteed, though these solutions may be local optima rather than global optima. Despite the possibility of both algorithms returning this local optima solution though, the Hartigan-Wong algorithm is generally the preferred algorithm for K-Means because it is harder for it to get stuck in a local optima since it considers the impact of the removal of the point from its existing cluster before moving it.
+
+
+
+### **Hierarchical**
+
+#### Average
+  
+#### Complete
+  
+#### Single
+  
+#### Ward
+  
+#### Centroid
+
+### **Gaussian Mixture Models (GMM)** 
+- **Introduction:** Recall that the goal of clustering is to sort the data points into groups according to some features or underlying structure in the data. One way to do this is to use mixture models. Mixture models are a clustering technique that assumes the data comes from two or more distributions and then attempts to sort the data into these distributions. While mixture models can be done with various distribution types, a common approach is to use normal distributions, which is then referred to as Gaussian Mixture Models.
+- **Choosing the number of distributions:** There are multiple ways to choose the number of distributions to use in the mixture model. One method is to use kmeans to determine the number of clusters and use this as the number of distributions. This can be done by running kmeans for two to some larger number of clusters, say 20, and plotting the sum of squares error (SSE) for each value of k. By visually inspecting this plot, we can determine where the SEE starts to level off and does not get much smaller as we increase k, which is the number of clusters we should use. Another approach is to use a GMM algorithm to choose the number of distributions. This can be done using the Mclust function from the Mclust package and it will output the number of clusters.
+- **The EM Algorithm:** Gaussian Mixture Models use the Expectation-Maximization Algorithm to determine the values of the parameters for the distributions in the mixture model. There are two steps in this algorithm: the E-step and the M-step. The E-step calculates the responsibilities, which are the posterior probabilities of the data points coming from each distribution or component. For example, responsibility $r_{ik}$ is the probability that the data point $i$ came from distribution $k$. The M-step uses the responsibilities to estimate the parameters of the distribution. The two steps are done iteratively, starting with the E-step. This means that we must first select values of the parameters $\theta$ that will be used to calculate the responsibilities in the initial E-step. In this iterative approach, the M-step then uses these responsibilities to recalculate the parameters, which are then used in the next E-step to again calculate the responsibilities. These steps are performed sequentially until they show signs of convergence, which means that the values of the responsibilities and parameters are changing only minimally at each iteration. The result is that we have the values of the parameters for each distribution in our mixture model as well as the probabilities of the points belonging to each of the distributions. 
+- **Cautions:** It is important to note that the EM algorithm depends on the choice of initial values for the parameters in the first E-step. A poor choice for these parameters will lead to poor results of the Gaussian Mixture Model, which may include the EM algorithm converging to local solutions rather than the global solutions. One way to account for this is to run the mixture model several times with different initial values and compare the results. It is also helpful to be strategic in choosing the initial parameter values by looking at metrics from the data rather than arbitrarily choosing them.
+</div>
+
+<div class="boxBorder">
+## Example
+Here we explore a sample dataset *based on* a dataset from the [National Institute of Standards and Technology](https://strbase.nist.gov/NISTpop.htm). The data consists of tabular autosomal Short Tandem Repeats (STRs) at 24 loci, or locations on the genome. 
+
+We have separated these profiles into 3 population reference groups: POP1, POP2, and POP3. We want to identify if the STR profiles cluster into distinct population groups. 
+
+First, we read in the data, remove NAs and sample 75 observations from each population group to ensure even sample sizes. 
+
+```{r, message=FALSE}
+library(tidyverse)
+```
+
+```{r}
+set.seed(211)
+setwd('/Users/colleencallahan/Desktop/MSDS/Fall 2020/SYS 6018')
+df <- read.csv("Sample_GenePop_Data.csv")
+df <- na.omit(df) # remove NA's
+
+## Sample 75 observations from each population
+pop1tmp <- df[which(df$Pop=='POP1'), ]
+pop2tmp <- df[which(df$Pop=='POP2'), ]
+pop3tmp <- df[which(df$Pop=='POP3'), ]
+
+pop1samplerows <- sample(nrow(pop1tmp), size=75)
+pop1sample <- subset(pop1tmp[pop1samplerows,])
+pop2samplerows <- sample(nrow(pop2tmp), size=75)
+pop2sample <- subset(pop2tmp[pop2samplerows,])
+pop3samplerows <- sample(nrow(pop3tmp), size=75)
+pop3sample <- subset(pop3tmp[pop3samplerows,])
+
+newdf <- rbind(pop1sample, pop2sample)
+newdf <- rbind(newdf, pop3sample)
+newdf[1:5,1:10]
+```
+First, we run K means clustering with K=3 on the sampled profiles to identify how well these cluster into three distinct groups. We can assess the accuracy using a confusion matrix for the cluster groups compared against the true population groups.
+
+### **K Means**
+```{r, message=FALSE}
+library(plyr)
+```
+
+```{r}
+## Set seed for reproducibility
+set.seed(211)
+
+## Run k means
+km = kmeans(newdf[,-1], centers=3, nstart=25)  # choose K=3
+## Produce confusion matrix
+tab <- table(true=newdf$Pop, est=km$cluster)
+## Map cluster numbers to appropriate population group
+mapping1 <- apply(tab,2,which.max)
+groups <- mapvalues(km$cluster, c(1,2,3), mapping1) 
+
+## Final accuracy table with correct classification
+t <- table(newdf$Pop, groups)
+t
+## Accuracy
+sum(diag(t)) /sum(t)
+
+```
+The accuracy of K means with K=3 is 0.564.
+
+
+### **Hierarchical**
+
+Next, we run hierarchical clustering using the `dist.gene()` function from the package `ape`. Based on the documentation, this function “computes a matrix of distances between pairs of individuals from a matrix or a data frame of genetic data.” It takes a genetic dataframe as an input, and with “pairwise=TRUE” it calculates the pairwise similarity between profiles in the dataframe. The similarity distance is based on the distance d which is the number of loci for which the profiles differ. The variance is d(L-d)/L where L is the total number of loci.  
+
+We run the hierarchical clustering with 5 different linkage methods: complete, single, centroid, average, and ward.D2. 
+
+```{r}
+library(ape)
+
+## Set seed for reproducibility
+set.seed(211)
+## Calculate distance for pairwise DNA profiles
+dX = dist.gene(newdf[,-1], method="pairwise")
+
+## Run hierarchical clustering for all 5 linkage methods
+hc1 = hclust(dX, method="complete")
+hc2 = hclust(dX, method="single")
+hc3 = hclust(dX, method="centroid")
+hc4 = hclust(dX, method="average")
+hc5 = hclust(dX, method="ward.D2")
+
+## Plot all 5 dendrograms
+plot(as.dendrogram(hc1), las=1, main='Complete linkage')
+plot(as.dendrogram(hc2), las=1, main='Single linkage')
+plot(as.dendrogram(hc3), las=1, main='Centroid linkage')
+plot(as.dendrogram(hc4), las=1, main='Average linkage')
+plot(as.dendrogram(hc5), las=1, main='Ward linkage')
+
+```
+
+It is clear that ward.D2 makes the most sense in this context, so we cut the dendrogram at height 90 to evaluate the 3 clusters versus the true population groups.
+
+```{r}
+set.seed(211)
+## Cut the dendrogram at height 90
+clusters <- cutree(hc5, h=90)
+## Produce confusion matrix 
+tab2 <- table(newdf$Pop, clusters)
+## Map cluster numbers to appropriate population group
+mapping2 <- apply(tab2,2,which.max)
+groups2 <- mapvalues(clusters, c(1,2,3),mapping2) 
+
+## Final confusion matrix with correct classification
+t <- table(newdf$Pop, groups2)
+t
+## Accuracy
+sum(diag(t)) /sum(t)
+```
+The accuracy of hierarchical clustering using Ward linkage is 0.738.
+
+
+### **Gaussian Mixture Model**
+
+Finally, we look at Gaussian Mixture Modeling (GMM). First, we run 2D multidimensional scaling on our DNA profiles using the `dist.gene()` distance metric to obtain x and y coordinates for each profile. Then, we cluster the resulting x and y coordinates for each profile using GMM, and plot the resulting clusters. 
+
+```{r, message=FALSE}
+library(mclust)
+```
+
+```{r}
+## Set seed for reproducibility
+set.seed(211)
+## Run multidimensional scaling to obtain x and y coordinates
+dX = dist.gene(newdf[,-1], method="pairwise")  # calculate distance
+fit <- cmdscale(dX, eig=TRUE, k=2) # k is the number of dim
+
+## Split out dimensions to x and y points
+newcluster <- fit$points
+
+## Run GMM on new data points obtained from MDS
+mix = Mclust(newcluster, verbose=FALSE)
+
+## Plot resulting clusters and uncertainty
+plot(mix, what='classification')
+plot(mix, what='uncertainty')
+```
+
+The first plot is the raw clustering of the x and y coordinates obtained from MDS, with each group's corresponding centroids and standard deviations. The second plot shows the uncertainty of each data point, represented by the size of each data point (with smaller data points being the most certain and larger data points having higher uncertainty). 
+
+```{r}
+set.seed(211)
+## Find the most likely cluster based on probabilities from GMM
+preds <- apply(mix$z,1,which.max)
+## Produce confusion matrix against true population groups
+tab3 <- table(newdf$Pop,preds)
+## Map cluster numbers to appropriate population group
+mapping3 <- apply(tab3,2,which.max)
+
+groups3 <- mapvalues(preds, c(1,2,3), mapping3) 
+
+## Final confusion matrix with correct classification
+t <- table(newdf$Pop, groups3)
+t
+## Accuracy
+sum(diag(t)) /sum(t)
+```
+The accuracy of GMM on the multidimensionally scaled data is 0.844.
+
+</div>
+
+
+<div class="boxBorder">
+## Conclusion
+
+</div>
+
+<div class="boxBorder">
+## References
+
+https://www.sciencemag.org/sites/default/files/styles/inline__450w__no_aspect/public/DNA_1280p.jpg?itok=_4Q9tQCL
+
+https://makewebbetter.com/blog/benefits-customer-segmentation-higher-profitability-holiday-sales/
+
+http://ceur-ws.org/Vol-2125/invited_paper_2.pdf
+
+https://beerensahu.wordpress.com/2019/02/07/explained-deeplab-for-semantic-segmentation/
+
+https://www.kdnuggets.com/2017/03/email-spam-filtering-an-implementation-with-python-and-scikit-learn.html
+
+https://gcn.com/articles/2019/06/03/fraud-analytics.aspx
+
+https://bigdata.oden.utexas.edu/project/graph-clustering/
+
+https://www.tqmp.org/RegularArticles/vol09-1/p015/p015.pdf 
+https://www.ijcai.org/Proceedings/13/Papers/249.pdf 
+
+</div>
