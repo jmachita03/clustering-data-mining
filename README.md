@@ -1,1 +1,1 @@
-# clustering-data-mining
+This repo houses the R markdown and html files for the clustering article with examples written by Jordan Machita, Colleen Callahan, and Tyler Manderfield. This was a group project as a part of our data mining course through the University of Virginia School of Data Science.
